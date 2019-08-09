@@ -1,0 +1,30 @@
+version: 2
+jobs:
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Login to hub.docker.com
+          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run:
+          name: Build docker image
+          command: docker build --build-arg nagios_password=${NAGIOS_PASS} -t jayamorin/nagios:latest .
+      - run:
+          name: Tag docker build
+          command: |
+            docker tag jayamorin/nagios:latest jayamorin/nagios:$CIRCLE_SHA1
+      - run:
+          name: Push docker build to hub.docker.com
+          command: |
+            docker push jayamorin/nagios:$CIRCLE_SHA1
+            docker push jayamorin/nagios:latest
+
+workflows:
+  version: 2
+  nagios:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
