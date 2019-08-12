@@ -75,6 +75,20 @@ RUN /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
 COPY config/supervisord.conf /etc/
 RUN mkdir /var/log/supervisor
 
-EXPOSE 80
+RUN cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.orig
+RUN sed -i '/Listen 80/a Listen 8000' /etc/httpd/conf/httpd.conf
+
+RUN cp /usr/local/nagios/etc/cgi.cfg /usr/local/nagios/etc/cgi.cfg.orig
+RUN sed -i 's,url_html_path=/nagios,url_html_path=/,g' /usr/local/nagios/etc/cgi.cfg
+
+RUN cp /usr/local/nagios/share/config.inc.php /usr/local/nagios/share/config.inc.php.orig
+RUN sed 's,/nagios/cgi-bin,/cgi-bin,g' /usr/local/nagios/share/config.inc.php
+
+RUN cp /etc/httpd/conf.d/nagios.conf /etc/httpd/conf.d/nagios.conf.orig
+COPY config/nagios.conf /etc/httpd/conf.d/
+
+RUN rm -f /etc/httpd/conf.d/php.conf /etc/httpd/conf.d/welcome.conf
+
+EXPOSE 8000
 
 CMD [ "/usr/local/bin/supervisord" ]
